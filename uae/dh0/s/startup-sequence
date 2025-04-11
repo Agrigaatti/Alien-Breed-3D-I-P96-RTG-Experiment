@@ -1,0 +1,8 @@
+; $VER: Startup-Sequence_HardDrive 40.2 (25.2.93)
+; Startup-Sequence for hard drive systems
+echo Setup..
+C:SetPatch
+c:cpu
+C:version
+sys:ab3d
+

@@ -1,0 +1,16 @@
+default: 
+            'k4nxs'
+            
+Offsets:
+            0:  "k" = Keyboard
+                "m" = Mouse
+                "n" = WASD
+                "j" = Joystick
+                "p" = Path
+            1:  "4" = Four Channel
+            2:  "s" = Stereo
+            3:  "b" = Background music
+            4:  "s" = Mouse sensitivity slow
+                "m" = Mouse sensitivity medium
+                "f" = Mouse sensitivity fast
+                "b" = Mouse sensitivity boost

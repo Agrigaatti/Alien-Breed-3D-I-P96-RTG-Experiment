@@ -1,0 +1,269 @@
+https://github.com/rkrajnc/minimig-mist/blob/master/doc/amiga/aga/AGA.guide
+
+Sprites
+-------
+
+Bits SPAGEM and SPR32 in @{"FMODE" link FMODE} whether size of sprite load datain
+@{"SPR0DATA(B)" link SPRxDAT} thru @{"SPR7DATA(B)" link SPRxDAT} is 16,32, or 64 bits, analagous to bitplanes.
+@{"BPLCON3" link BPLCON3} contains several bits relating to sprite behavior. SPRES1 and
+SPRES0 control sprite resolution, whether they conform to theECS standard
+or override tp LORES,HIRES,or SHRES. BRDRSPRT, when high,allows sprites to
+be visible in border areas. ESPRM7 thru ESPRM4 allow relocation of the even
+sprite color map. OSPRM7 thru OSPRN4 allow relocation of the odd sprite
+color map. In the case of attached sprites OSPRM bits are used.
+
+SSCAN2 bit in @{"FMODE" link FMODE} enables sprite scan-doubling. When enabled, individual
+SH10 bits in SPRxPOS registers control whether or not a given sprite is to
+be scan-doubled. When V0 bit of @{"SPRxPOS" link SPRxPOS} register matches V0 bit of vertical
+beam counter, the given sprite`s DMA is allowed to proceed as before. If
+the don`t match, then sprite DMA is disabled and LISA reuses the sprite
+ data
+from the previous line. When sprites are scan-doubled, only the position
+and control registers need be modified by the programmer; the data
+registers need no modification.
+
+NOTE: Sprite vertical start and stop positions must be of the same parity,
+i.e. both odd or even.
+
+All sprites can now be displayed in either:
+
+1) ECS default mode
+2) 140 ns (this is not ECS mode!)
+3) 70 ns
+4) 35 ns
+
+on display resolution. eg 35 ns sprites on a lores screen, or 140 ns
+sprites on a superhires screen.
+
+Sprites are either 16, 32, or 64 bits wide.
+
+Sprites can be attatched in any mode (formerly could not attach sprites
+in the ECS SHRES 35ns resolution mode).
+
+Can use any bank of 16 colours from the 256 colour palette for the sprite
+colours.
+
+NAME   rev ADDR type chip Description
+---------------------------------------------------------------------------
+BPLCON4 p 10c  W       D  Bit plane control reg. (display masks)
+
+ +------+----------+----------------------------------------------------------+
+ | BIT# | BPLCON4  | DESCRIPTION                                              |
+ +------+----------+----------------------------------------------------------+
+ | 15   | BPLAM7=0 | This 8 bit field is XOR`ed with the 8 bit plane color    |
+ |      |          | address, thereby altering the color address sent to the  |
+ |      |          | color table (x=1-8)                                      |
+ | 14   | BPLAM6=0 |                                                          |
+ | 13   | BPLAM5=0 |                                                          |
+ | 12   | BPLAM4=0 |                                                          |
+ | 11   | BPLAM3=0 |                                                          |
+ | 10   | BPLAM2=0 |                                                          |
+ | 09   | BPLAM1=0 |                                                          |
+ | 08   | BPLAM0=0 |                                                          |
+ | 07   | ESPRM7=0 | 4 Bit field provides the 4 high order color table address|
+ |      |          | bits for even sprites: SPR0,SPR2,SPR4,SPR6. Default value|
+ |      |          | is 0001 binary. (x=7-4)                                  |
+ | 06   | ESPRM6=0 |                                                          |
+ | 05   | ESPRM5=0 |                                                          |
+ | 04   | ESPRM4=1 |                                                          |
+ | 03   | OSPRM7=0 | 4 Bit field provides the 4 high order color table address|
+ |      |          | bits for odd sprites: SPR1,SPR3,SPR5,SPR7. Default value |
+ |      |          | is 0001 binary. (x=7-4)                                  |
+ | 02   | OSPRM6=0 |                                                          |
+ | 01   | OSPRM5=0 |                                                          |
+ | 00   | OSPRM4=1 |                                                          |
+ +------+----------+----------------------------------------------------------+
+
+NAME   rev ADDR type chip Description
+---------------------------------------------------------------------------
+SPRxPOS   140   W    A  D   Sprite x vert-horiz start position data.
+
++-------+----------+------------------------------------------------+
+| BIT#  | SYM      | FUNCTION                                       |
++-------+----------+------------------------------------------------+
+| 15-08 | SV7-SV0  | Start vertical value.High bit (SV8) is         |
+|       |          | in SPRxCTL register below.                     |
+| 07-00 | SH10-SH3 | Sprite horizontal start value. Low order       |
+|       |          | 3 bits are in @{"SPRxCTL" link SPRxCTL} register below. If       |
+|       |          | SSCAN2 bit in @{"FMODE" link FMODE} is set, then disable       |
+|       |          | SH10 horizontal coincidence detect.This bit    |
+|       |          | is then free to be used by ALICE as an         |
+|       |          | individual scan double enable.                 |
++-------+----------+------------------------------------------------+
+
+SPRxCTL p 142 W     A  D   Sprite position and control data
+
++-------+----------+------------------------------------------------+
+| BIT#  | SYM      | FUNCTION                                       |
++-------+----------+------------------------------------------------+
+| 15-08 | EV7-EV0  | End (stop) vert. value. Low 8 bits             |
+| 07    | ATT	    | Sprite attach control bit (odd sprites only)   |
+| 06    | SV9	    | Start vert value 10th bit.                     |
+| 05    | EV9      | End (stop) vert. value 10th bit                |
+| 04    | SH1=0    | Start horiz. value, 70nS increment             |
+| 03    | SH0=0    | Start horiz. value 35nS increment              |
+| 02    | SV8      | Start vert. value 9th bit                      |
+| 01    | EV8      | End (stop) vert. value 9th bit                 |
+| 00    | SH2      | Start horiz.value,140nS increment              |
++-------+----------+------------------------------------------------+
+         
+VERTICAL POSITION - You can select any position from line 0 to line 262 for the topmost edge of the sprite
+HORIZONTAL POSITION - A sprite's horizontal position (X value) can be at any pixel on the screen from 0 to 447
+
+Sprite default width: 64 pixels
+Color registers: 16-31 (first color is transparent)
+Spr 0-1 : 16-19
+Spr 2-3 : 20-23
+Spr 4-5 : 24-27
+Spr 6-7 : 28-31     
+
+https://ada.untergrund.net/?p=boardthread&id=984
+
+i have 64x64 pixel 16 colored sprites. the amiga takes the 16 colors from the second table (color 16-31).
+is it possible to change the position of this colortable in the palette? maybe sprite (0/1) from color 16-31 and
+sprite (2/3) from color 32-47?
+
+You have some control over this on AGA: bits 0-3 in BPLCON4 select the 16-color page used for odd-numbered sprites, and bits 4-7 are for even-numbered sprites, 
+so it's possible to give each sprite its own palette. 
+When sprites are attached they all use the same page unfortunately, the one selected for odd-numbered sprites, 
+but at least you're able to break them out of the usual 16-31 range.
+
+Thanks for this! :)
+A neat thing about this colour banking is that one can put a HAM8 background with 64 base colours carefully chosen. 
+And then put a sprite layer on top using colours 64 and upwards! Thus not disturbing the HAM8 background image by altering its base colours. 
+
+
+http://amigadev.elowar.com/read/ADCD_2.1/Hardware_Manual_guide/node00C6.html
+
+You can create sprites that have fifteen possible color choices (plus
+transparent) instead of three (plus transparent), by "attaching" two
+sprites. To create attached sprites, you must:
+
+   *  Use two channels per sprite, creating two sprites of the same
+      size and located at the same position.
+
+   *  Set a bit called  ATTACH  in the  second sprite control word .
+
+The fifteen colors are selected from the full range of  color registers 
+available to sprites -- registers 17 through 31. The extra color choices
+are possible because each pixel contains four bits instead of only two as
+in the normal, unattached sprite. Each sprite in the attached pair
+contributes two bits to the binary color selector number. For example, if
+you are using sprite  DMA channels  0 and 1, the high and low order
+ color descriptor words  for line 1 in both  data structures  are combined
+into line 1 of the attached object.
+
+Sprites can be attached in the following combinations:
+
+                       Sprite 1 to sprite 0
+                       Sprite 3 to sprite 2
+                       Sprite 5 to sprite 4
+                       Sprite 7 to sprite 6
+
+Any or all of these attachments can be active during the same display
+field. As an example, assume that you wish to have more colors in the
+spaceship sprite and you are using sprite  DMA channels  0 and 1. There
+are five colors plus transparent in this sprite.
+
+
+                         0000154444510000
+                         0001564444651000
+                         0015676446765100
+                         0001564444651000
+                         0000154444510000
+
+
+The first line in this sprite requires the four  data words  shown in
+Table 4-4 to form the correct binary color selector numbers.
+
+
+        Table 4-4:  Data Words  for First Line of Spaceship Sprite
+
+
+                           Pixel Number
+                           ------------
+
+           15  14  13  12  11  10   9   8   7   6   5   4   3   2   1   0
+   ----------------------------------------------------------------------
+   Line 1   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+   Line 2   0   0   0   0   0   1   1   1   1   1   1   0   0   0   0   0
+   Line 3   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+   Line 4   0   0   0   0   1   1   0   0   0   0   1   1   0   0   0   0
+
+
+The highest numbered sprite (number 1, in this example) contributes the
+highest order bits (leftmost) in the binary number. The high order
+ data word  in each sprite contributes the leftmost digit. Therefore, the
+lines above are written to the sprite  data structures  as follows:
+
+        Line 1    Sprite 1 high order word for sprite line 1
+        Line 2    Sprite 1 low order word for sprite line 1
+        Line 3    Sprite 0 high order word for sprite line 1
+        Line 4    Sprite 0 low order word for sprite line 1
+
+See  Figure 4-7  for the order these words are stored in memory. Remember
+that this data is contained in two sprite structures.
+
+The binary numbers 0 through 15 select registers 17 through 31 as shown in
+Table 4-5.
+
+
+          Table 4-5: Color Registers in Attached Sprites
+
+
+            Decimal        Binary     Color Register
+            Number         Number         Number
+            -------        ------     --------------
+               0            0000            16 *
+               1            0001            17
+               2            0010            18
+               3            0011            19
+               4            0100            20
+               5            0101            21
+               6            0110            22
+               7            0111            23
+               8            1000            24
+               9            1001            25
+              10            1010            26
+              11            1011            27
+              12            1100            28
+              13            1101            29
+              14            1110            30
+              15            1111            31
+
+
+              * Unused; yields transparent pixel.
+
+
+Attachment is in effect only when the  ATTACH  bit, bit 7 in sprite
+ control word 2 , is set to 1 in the  data structure  for the odd-numbered
+sprite. So, in this example, you set bit 7 in sprite  control word 2  in
+the  data structure  for sprite 1.
+
+When the sprites are moved, the Copper list must keep them both at exactly
+the same position relative to each other. If they are not kept together on
+the screen, their pixels will change color. Each sprite will revert to
+three colors plus transparent, but the colors may be different than if
+they were ordinary, unattached sprites. The color selection for the lower
+numbered sprite will be from color registers 17-19. The color selection
+for the higher numbered sprite will be from color registers 20, 24, and 28.
+
+The following  data structure  is for the six-color spaceship made with two
+attached sprites.
+
+SPRITE0:
+        DC.W    $6D60,$7200     ;VSTART = 65, HSTART = 128
+        DC.W    $0C30,$0000     ;First  color descriptor word 
+        DC.W    $1818,$0420
+        DC.W    $342C,$0E70
+        DC.W    $1818,$0420
+        DC.W    $0C30,$0000
+        DC.W    $0000,$0000     ;End of sprite 0
+SPRITE1:
+        DC.W    $6D60,$7280     ;Same as sprite 0 except  attach  bit on
+        DC.W    $07E0,$0000     ;First descriptor word for sprite 1
+        DC.W    $0FF0,$0000
+        DC.W    $1FF8,$0000
+        DC.W    $0FF0,$0000
+        DC.W    $07E0,$0000
+        DC.W    $0000,$0000     ;End of sprite 1

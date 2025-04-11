@@ -1,0 +1,22 @@
+*********************************************************************************************
+Format of chunky screen copperlist:
+   - Double buffered copper lists
+   - 104*80 chunky pixels (byte size 104*4*80)
+   - Initally CNOP filled memory ($1fe0000).
+   - n bitplane bitmap pattern
+   - Length= (widthOffset*scrHeight)+16
+
+    init:
+        for 104*4*80
+            CMOVE($01fe,$0000)
+        CMOVE(bplcon3,$0c42)
+        CMOVE(cop1lch,#PanelCop.h)
+        CMOVE(cop1lcl,#PanelCop.l)
+        CMOVE(copjmp1,$0000)
+
+    setup:
+        CMOVE(bplcon4,$0000)
+        CMOVE(bplcon3,
+        ..
+        
+*********************************************************************************************

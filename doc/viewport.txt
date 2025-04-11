@@ -1,0 +1,39 @@
+https://forum.amiga.org/index.php?topic=59113.0
+
+Hopefully my answer isn't too late and gives you a clue.
+
+I am unsure what you would like to achieve but then again...
+
+The "View".
+The "View" is the chief of the display. It controls how the display is managed.
+In the old era the "View" did hold the current copper lists (lofCprList and shftCprList), which are really just copper instructions forming the display.
+"lofCprList" is always in use and when an interlace display is viewed it will just hold the copper instructions for the odd pixel lines, otherwise all the pixel lines.
+"shftCprList" is only used for interlace displays, then it points to copper instructions for the even pixel lines.
+"dxOffset" and "dyOffset" are just for one reason there; to adjust a monitor to the absolute 0,0 coordinate of the display; mostly it was used to see the entire display when the overscan mode was activated.
+"modes" is just a field that tells Intuition about the screen that is viewed.
+"Viewport" of "View" points to the first "ViewPort" of the internal "ViewPort" list.
+
+"ViewPorts".
+"next" points to the next ViewPort structure of the internal list.
+"colorMap" - a colorMap may reside in Fast-RAM if possible but since the "View" requires copper instructions, MakeVPort() will be called to generate the proper colour copper instructions (see RethinkDisplay(), ViewPort->clrIns). If it is zero, the OS default colours will be utilised when MakeVPort() is called. Due to a bug in the OS (at least under OS 1.2 and 1.3 and for Intuition screens "colorMap" had always to be non-zero, otherwise upon closing the screen it tried to deallocate the memory region pointed to by "colorMap" ( FreeMem( 0, sizeof (struct whatsoever)) ).
+"dspIns" points to a temporary copper list, which is responsible for the display (display instructions). These copper instructions will be utilised together with "sprIns" and "clrIns" as well as "uCopIns" upon the next MrgCop() call and then will form the hardware copper instructions, which will be performed by the Copper when LoadView() is called.
+"sprIns" - sprite instructions (temporary copper list)
+"clrIns" - colour instructions (temporary copper list)
+"uCopInst" - user Copper list or zero if none (temporary copper list)
+dWidth - always the width of the visible ViewPort area; since horizontal scrolling of screens was not possible it is always the same value (entire width).
+dHeight - visible height of the ViewPort; if this ViewPort is overlaped by an other, the amount a visible rows is of course lower than entirely displayed.
+"dxOffset" and "dxOffset" - same as for "View". Note, once changed, you have to call RethinkDisplay() for Intuition screens or MakeVPort(), MrgCop() and LoadView() for any other displays.
+"modes" - corresponds directly with NewScreen->ViewModes.
+"spritePriorities" - sprite priorities for MakeVPort() - huge and complex!
+"rasInfo" - the link between a ViewPort and its BitMap.
+
+MakeVPort() calculates the values depending on changes of the ViewPort settings; MrgCop() translates these changes and make them readable for the Copper; LoadView() displays them, i.e. it feeds the copper with the Copper list(s).
+
+That's all I know about it. For RTG graphics there aren't any copper instructions hence I don't know how MakeVPort(), MrgCop() and LoadView() were implemented nor what they do or how they act at all.
+
+Concerning RethinkDisplay(): It is nowadays only of secondary importance because since OS 2.0 the screen handling is much more friendly than at times of OS 1.2.
+For example, RethinkDisplay() always had to be called after MakeScreen(), nowadays only when you change "dxOffset" and/or "dyOffset". After all, I don't see much reasons why to use RethinkDisplay() at all, only if screens deal with BitMaps larger than what's displayable (scrolling BitMap contents), when you drag screens, change the entire BitMap or modify colours without using LoadRGB() or LoadRGB32() on native displays.
+
+I have to confess that I never looked at ScrollingTrick, hence I don't know what is so important that RethinkDisplay() must be applied on your side when using RTG graphics. You should be also aware of the fact that RethinkDisplay() is a function that takes ages before it is carried out (at least for native displays) because all ViewPorts will be investigated and updated if necessary. If there is only one screen (one ViewPort) then it returns of course a bit faster.
+
+Regards

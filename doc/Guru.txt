@@ -1,0 +1,356 @@
+*******************************************************************************************************************
+\includes\exec\alerts.i
+8000 0003 - Illegal address access (ie: odd)
+8000 0004 - Illegal instruction
+8000 0006 - Check instruction error
+8000 000B - Line 1111 Emulator error
+8000 0025 - 
+8100 0005 - Corrupted memory lists
+
+*******************************************************************************************************************
+https://eab.abime.net/showthread.php?t=51003
+Blitter nasty things
+
+;https://eab.abime.net/showthread.php?t=96612
+
+; 000482b0 3e80                     move.w d0,(a7) [00f9]
+; 000482b2 317c ffff 1f40           move.w #$ffff,(a0,$1f40) == $0026bc24 [0000]
+; 000482b8 30fc ffff                move.w #$ffff,(a0)+ [0000]
+; 000482bc 51c9 ffe8                dbf.w d1,#$ffe8 == $000482a6 (F)
+; 000482c0 4e75                     rts  == $00f9fdea
+
+; 000482c2 21cf 1000                move.l a7,$1000.w [ffffffff]
+; 000482c6 4ff8 7b18                lea.l $7b18.w,a7
+; 000482ca 4eb9 0005 abd0           jsr $0005abd0
+; 000482d0 4eb9 0004 3062           jsr $00043062
+
+
+; About the blitter done flag.
+;    ----------------------------
+;    If a blit has just been started but has been locked out of memory
+;    access because of, for instance, display fetches, this bit may not
+;    yet be set.  The processor, on the other hand, may be running
+;    completely uninhibited out of Fast memory or its internal cache, so
+;    it will continue to have memory cycles.
+
+; The solution is to read a chip memory or hardware register address with
+; the processor before testing the bit.  This can easily be done with the
+; sequence:
+
+;         btst.b  #DMAB_BLTDONE-8,DMACONR(a1)
+;         btst.b  #DMAB_BLTDONE-8,DMACONR(a1)
+
+\Warhead\includes\exec\alerts.i
+
+8000 000E - Stack frame format error
+https://eab.abime.net/showthread.php?t=101186
+"A guru 0x8000000E "Stack frame format error" indicates a "Format error" was detected by the Amiga 1200's 68EC020 CPU while 
+executing a RTE (Return from Exception) instruction when it checked the format/offset word in the exception stack frame on the "system stack".
+Which Kickstart version is installed your Amiga 1200? An Amiga 1200's kickstart version should only be v3.0, v3.1, or v3.1.4." 
+
+http://zakalwe.fi/~shd/amiga-cracking/agafix-v1.html
+Stackframes are different on each processor
+The stackframes created by the processor on interrupts and exceptions are different for the members of the 68k family. 
+On the 68000 a stackframe is 6 bytes, except on Bus and Address Error. 
+The stackframe contains first the saved SR at (a7) and the saved PC at (2,a7). 
+On all other processors (68010+) the minimal stackframe is 8 bytes 
+and additionally contains the vector number as word at (6,a7). 
+This Four-Word stackframe format $0 is created for "Trap #xx" and Interrupts on 68010-68060. 
+The stackframes on other exceptions are different on each processor.
+The RTE instruction works differently on the 68000 against 68010+. 
+On a 68000 it simply writes the SR and PC back and continues program execution at the interrupted address. 
+On the 68010+ it additionally frees the stackframe depending on the stackframe format.
+
+Some programs push an address (PC) and a SR and then execute an RTE instruction. This works on a 68000 only, 
+but on 68010+ this will have undefinable results.
+
+If a program contains this awful code, you have to emulate it. Sometimes it may be enough to replace the rte with an rtr.
+Another way is to make the stackframe independent from the type of processor by using a TRAP (the JSR equivalent of RTE).
+
+*******************************************************************************************************************
+
+Guru Meditation Error Codes:
+FORMAT OF ALERT ERROR NUMBER: #DSGeCode.TADDRESS
+
+D :This indicates whether or not the software failure is recoverable or not (with the current OS none are really). A zero means that it is recoverable and any non-zero value means that it isn't.
+
+S :This (together with D) indicates the subsystem that generated the alert. The various subsystems are (DS):
+
+00 .. Processor or none
+01 .. Exec.Library
+02 ..Graphics.Library
+03 .. Layers.Library
+04 .. Intuition.Library
+05 .. Math.Library
+06 .. Clist.Library
+07 .. DOS.Library
+08 .. RAM.Library
+09 .. Icon.Library
+10 .. Audio.device
+11 .. Console.device
+12 .. GamePort.device
+13 .. Keyboard.device
+14 .. Trackdisk.device
+15 .. Timer.device
+20 .. CIA.resource
+21 .. Disk.resource
+22 .. Misc.resource
+0A .. Expansion.Library
+30 .. Bootstrap
+31 .. Workbench
+32 .. Diskcopy
+
+Ge :This indicates the general error. Basically telling you what went wrong. The various defined General Errors are (Ge):
+
+01 .. No memory
+02 .. Make Library
+03 .. Open Library
+04 .. Open Device
+05 .. Open Resident
+06 .. I/O Error
+07 .. No Signal
+
+Code :This gives more detail as to what went wrong. The value that appears here depends on the subsystem and general error.
+
+TAddress :This is the Address of the task that caused the guru (where applicable).
+
+Quite often the processor with trap an error. The operating system will then display a guru. These errors will only contain two digits (the right-most two digits in 'Code') and their meanings are:
+
+00 .. Reset (SP). /Technically, these shouldn't occur, but
+01 .. Reset (PC). /they do pop up occassionally
+02 .. Bus Error.
+03 .. Address Error. A word or Long Word access was attempted on an odd address boundary.
+04 .. Illegal Instruction. A program probably made a jump to somewhere it shouldn't have.
+05 .. Divide by zero. A program has attempted to divide a number by zero (a mathematical impossibility).
+06 .. CHK instructions.
+07 .. TRAPV Instruction. Overflow.
+08 .. Privilege Violation. A program in user mode attempted to execute a privileged Instruction.
+09 .. Trace. Used in some debugging.
+0A & 0B .. A & F Line Emulation. Used with some coprocessors. Usually program is out of control.
+18 .. Spurious interrupt.
+19 to 1F .. Auto-Vector Interrupts - These should not happen as the OS uses them to detect what is going on with the hardware, but as with all others they do appear sometimes.
+20 to 2F .. Trap Vectors - Usually a program is out of control.
+30 to 3F .. These are reserved by Motorola. Any program causing these is probably out of control.
+40 to FF .. User Interrupt Vectors - Usually a program is out of control.
+
+
+General Error Codes
+
+01 - Not enough memory
+02 - Couldn't make library
+03 - Can't open library
+04 - Can't open device
+05 - Can't open resource
+06 - I/O error
+07 - No signal
+08 - Bad parameters
+09 - Close library failed: usually too many closes
+0A - Close device failed: or a mismatched close
+0B - Process creation failed
+
+Specific Alert Codes
+
+EXEC Library
+0001 - 68000 exception vector checksum (obs)
+0002 - Execbase checksum bad (obs)
+0003 - Library checksum failure
+0005 - Corrupt memory list detected in FreeMem
+0006 - No memory for interrupt servers
+0007 - InitStruct() of an APTR source (obs)
+0008 - A semaphore is in an illegal state of Rem Semaphore()
+0009 - Freeing memory that is already free
+000A - Illegal 68K exception taken (obs)
+000B - Attempt to reuse active OIRequest
+000C - Sanity check on memory list failed during AvailMem (MEMF_LARGEST)
+000D - IO attempted on close IORequest
+000E - Stack appears to extend out of range
+000F - Memory header not located. Usually an invalid address passed to FreeMem
+0010 - An attempt was made to use the old message semaphores
+00FF - A quick interrupt has happened to an uninitialised vector
+
+CPU Exceptions
+0002 - Bus Error
+0003 - Addressing error
+0004 - Illegal instruction
+0005 - Divide by zero
+0006 - CHK instruction
+0007 - TRAPV instruction
+0008 - Privilege violation
+0009 - Trace
+000A - OpCode 1010
+000B - OpCode 1111
+000E - Stack frame format error
+0018 - Spurious interrupt error
+0019 to 001F - AutoVector Level 1 to 7 int error
+
+Intuition Library
+0001 - Unknown gadget type
+0002 - Create port, no memory
+0003 - Item plane alloc, no memory
+0004 - Sub alloc, no memory
+0005 - Plane alloc, no memory
+0006 - Item box top <RelZero
+0007 - Open screen, no memory
+0008 - Open screen, raster alloc, no memory
+0009 - Open sys screen, unknown type
+000A - Add SW gadgets, no memory
+000B - Open window, no memory
+000C - Bad Stare Return entering Intuition
+000D - Bad message received by IDCMP
+000E - Weird echo causing incomprehension
+000F - Couldn't open the Console Device
+0010 - Intuition skipped obtaining a sem
+0011 - Intuition obtained a sem in bad order
+
+Graphics Library
+0000 - Graphics out of memory
+0001 - MonitorSpec alloc, no memory
+0006 - Long frame, no memory
+0007 - Short frame, no memory
+0009 - Text, no memory for TmpRas
+000A - BitBitMap, no memory
+000B - regions, memory not available
+0030 - Make V Por, no memory
+000C - (GFX New Error)
+000D - (GFX Free Error)
+1234 - Emergency memory not available
+0401 - Unsupported font description used
+
+Workbench
+0001 - No fonts
+0001 - WB Bad Startup Msg1
+0002 - WB Bad Startup Msg2
+0003 - WB Bad IO Msg
+0004 - WB Init Potion Alloc Drawer
+0005 - WB Create WB Menus Create Menus1
+0006 - WB Create WB Menus Create Menus2
+0007 - WB Layout WB Menus Layout Menus
+0008 - WB Add Tool Menu Item
+000A - WB InitTimer
+000B - WB Init Layer Demon
+000C - WB Init WB Gels
+000D - WB Init Screen and Windows1
+000E - WB Init Screen and Windows2
+000F - WB Init Screen and Windows3
+0010 - WBMAlloc
+
+Layers Library
+0000 - Layers out of memory
+
+Expansion Library
+0001 - Freed free memory
+
+Trackdisk Device
+0001 - Calibrate: seek error
+0002 - Delay: error on timer wait
+
+Disk Resource
+0001 - Get unit: already has a disk
+0002 - Interrupt: no active unit
+
+RamLib Library
+0001 - Overlays are illegal for library segments
+
+Console Device
+0001 - Console can't open initial window
+
+Timer Device
+0001 - Bad request
+0002 - Power supply: no 50/60 Hz ticks
+
+Bootstrap
+0001 - Boot code returned an error
+
+Dos Library
+0001 - No memory at startup
+0002 - EndTask didn't
+0003 - Qpkt failure
+0004 - Unexpected packet received
+0005 - Freevec failed
+0006 - Disk block sequence error
+0007 - Bitmap corrupt
+0008 - Key already free
+0009 - Invalid checksum
+000A - Disk error
+000B - Key out of range
+000C - Bad overlay
+000D - Invalid init packet for CLI/SHELL
+
+Alert Objects
+8001 - ExecLib
+8002 - GraphicsLib
+8003 - LayersLib
+8004 - Intuition
+8005 - MathLib
+8007 - DOSLib
+8008 - RAMLib
+8009 - IconLib
+800A - ExpansionLib
+800B - DiskfontLib
+800C - UtilityLib
+800D - KeyMapLib
+8010 - AudioDev
+8011 - ConsoleDev
+8012 - GamePortDev
+8013 - KeyboardDev
+8014 - TrackDiskDev
+8015 - TimerDev
+8020 - CIARsrc
+8021 - DiskRsrc
+8022 - MiscRsrc
+8030 - BootStrap
+8031 - Workbench
+8032 - Diskcopy
+8033 - GadTools
+8035 - Unknown
+
+
+AmigaDos Error Codes Displayed in CLI or Shell
+
+103 - No free store
+105 - Task table full
+114 - Bad temlate
+115 - Bad number
+116 - Required arg missing
+117 - Key needs arg
+118 - Too many args
+119 - Unmatched quotes
+120 - Line too long
+121 - File no object
+122 - Invalid resident library
+201 - No default dir
+202 - Object in use
+203 - Object exists
+204 - Dir not found
+205 - Object not found
+206 - Bad stream name
+207 - Object too large
+209 - Action not known
+210 - Invalid component name
+211 - Invalid lock
+212 - Object wrong type
+213 - Disk not validated
+214 - Disk write protected
+215 - Rename across devices
+216 - Directory not empty
+217 - Too many levels
+218 - Device not mounted
+219 - Seek error
+220 - Comment too big
+221 - Disk full
+222 - Delete protected
+223 - Write protected
+224 - Read protected
+225 - Not a DOS disk
+226 - No disk
+233 - Is soft linked
+234 - Object linked
+235 - Bad hunk
+236 - Not implemented
+240 - Record no locked
+241 - Lock collision
+242 - Lock timeout
+243 - Unlock error
+303 - Buffer overflow
+304 - ***Break
+305 - File not executable
