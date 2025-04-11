@@ -10,7 +10,7 @@ John Girvin's RTG version sources : https://github.com/mheyer32/ab3d-rtg<br>
 AmigaOS includes : https://github.com/kusma/amiga-dev<br>
 VS Code extension : https://marketplace.visualstudio.com/items?itemName=prb28.amiga-assembly<br>
 <br>
-Builds, runs, and can play, but it is not a complete conversion - just an incomplete, buggy experiment<br>
+Builds, runs, and can play, but it is not a complete conversion - just an incomplete, buggy experiment <br>
 <br>
 
 ![Screenshot](https://github.com/user-attachments/assets/95b4f664-d2d0-4cc0-833e-4efb315ab7ea)
